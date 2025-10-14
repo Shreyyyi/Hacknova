@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Dataset Loading</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+</head>
+<body>
+    <h1>Test Dataset Loading</h1>
+    <select id="dataset-select">
+        <option value="">Select a dataset...</option>
+        <option value="DATASET/city_day.csv">City Pollution Data (Daily) - 2.5 MB</option>
+        <option value="DATASET/station_day.csv">Station Pollution Data (Daily) - 8.4 MB</option>
+        <option value="DATASET/city_hour.csv">City Pollution Data (Hourly) - 64 MB</option>
+    </select>
+    <button id="load-btn">Load Selected Dataset</button>
+    <div id="result"></div>
+
+    <script src="js/data-loader.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const datasetSelect = document.getElementById('dataset-select');
+            const loadBtn = document.getElementById('load-btn');
+            const resultDiv = document.getElementById('result');
+            
+            // Initialize data loader
+            window.dataLoader = new DataLoader();
+            
+            loadBtn.addEventListener('click', async () => {
+                const selectedPath = datasetSelect.value;
+                if (!selectedPath) {
+                    resultDiv.innerHTML = '<p>Please select a dataset first</p>';
+                    return;
+                }
+                
+                resultDiv.innerHTML = '<p>Loading...</p>';
+                
+                try {
+                    const response = await fetch(selectedPath);
+                    if (!response.ok) throw new Error('Dataset not found');
+                    
+                    const text = await response.text();
+                    await window.dataLoader.parseCSV(text);
+                    
+                    resultDiv.innerHTML = `
+                        <h2>Dataset Loaded Successfully</h2>
+                        <p>Total Records: ${window.dataLoader.metadata.totalRecords}</p>
+                        <p>Locations: ${window.dataLoader.metadata.locations.length}</p>
+                        <p>Data Type: ${window.dataLoader.metadata.dataType}</p>
+                        <p>Pollutants: ${window.dataLoader.metadata.pollutants.join(', ')}</p>
+                    `;
+                } catch (error) {
+                    resultDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
